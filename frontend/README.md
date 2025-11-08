@@ -1,16 +1,41 @@
-# React + Vite
+# Vibe Supply – Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React frontend for the mock e-commerce cart backend in the repo root. It fetches products, lets you add/remove items from the cart, and keeps totals in sync with the Express + MongoDB API.
 
-Currently, two official plugins are available:
+## Features
+- Product catalogue with search + responsive grid layout
+- Live cart summary with totals and item breakdown
+- API integration with loading/empty states and user notifications
+- Axios-based client with configurable backend base URL
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Getting Started
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Start the backend (from the repository root) so the API is available on `http://localhost:5000`:
+   ```bash
+   npm run dev
+   ```
+3. In this `frontend` folder, run the Vite dev server:
+   ```bash
+   npm run dev
+   ```
+4. Open the provided local URL (default `http://localhost:5173`). The app connects to the backend automatically when both are running.
 
-## React Compiler
+## Configuration
+- `VITE_API_BASE_URL` (optional): set this if the backend runs on a different host/port. Example:
+  ```bash
+  VITE_API_BASE_URL=http://localhost:5000
+  ```
+  Without this variable the app assumes:
+  - `http://localhost:5000` during `npm run dev`
+  - the same origin when built for production
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Testing the Flow
+1. Load the app to see the seeded products from the backend.
+2. Use “Add to cart” to push items to the server-side cart.
+3. Remove items from the cart panel and observe totals updating immediately.
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+Tailor the styling and interactions under `src/App.css` and `src/api` as needed to match your branding or extend business logic.*** End Patch
