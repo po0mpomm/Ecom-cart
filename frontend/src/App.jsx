@@ -15,6 +15,24 @@ const currencyFormatter = new Intl.NumberFormat("en-IN", {
 
 const emptyCart = { items: [], total: 0 };
 
+function normalizeCart(data) {
+  if (!data) return emptyCart;
+  const items = data.items ?? [];
+  const total =
+    typeof data.total === "number"
+      ? data.total
+      : items.reduce(
+          (sum, item) => sum + (item?.product?.price ?? 0) * (item?.qty ?? 0),
+          0
+        );
+
+  return {
+    ...data,
+    items,
+    total,
+  };
+}
+
 function App() {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState(emptyCart);
@@ -24,9 +42,14 @@ function App() {
   const [error, setError] = useState(null);
   const [notification, setNotification] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [highlightedProductId, setHighlightedProductId] = useState(null);
+  const [cardStyles, setCardStyles] = useState({});
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     loadProductsAndCart();
+    const timer = setTimeout(() => setIsReady(true), 120);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -61,7 +84,7 @@ function App() {
     }
 
     if (cartResult.status === "fulfilled") {
-      setCart(cartResult.value);
+      setCart(normalizeCart(cartResult.value));
     } else {
       setNotification({
         type: "warning",
@@ -77,7 +100,8 @@ function App() {
     setPendingCartAction(true);
     try {
       const updated = await addToCartApi(product._id, 1);
-      setCart(updated);
+      setCart(normalizeCart(updated));
+      setHighlightedProductId(product._id);
       setNotification({
         type: "success",
         message: `${product.name} added to cart.`,
@@ -96,7 +120,8 @@ function App() {
     setPendingCartAction(true);
     try {
       const updated = await removeFromCart(product._id);
-      setCart(updated);
+      setCart(normalizeCart(updated));
+      setHighlightedProductId(product._id);
       setNotification({
         type: "info",
         message: `${product.name} removed from cart.`,
@@ -111,11 +136,45 @@ function App() {
     }
   }
 
+  function handleCardMouseMove(event, productId) {
+    const card = event.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const rotateX = ((rect.height / 2 - y) / rect.height) * 10;
+    const rotateY = ((x - rect.width / 2) / rect.width) * 10;
+    const spotlightX = (x / rect.width) * 100;
+    const spotlightY = (y / rect.height) * 100;
+
+    setCardStyles((prev) => ({
+      ...prev,
+      [productId]: {
+        "--rx": `${rotateX}deg`,
+        "--ry": `${rotateY}deg`,
+        "--px": `${spotlightX}%`,
+        "--py": `${spotlightY}%`,
+      },
+    }));
+  }
+
+  function handleCardMouseLeave(productId) {
+    setCardStyles((prev) => {
+      const next = { ...prev };
+      delete next[productId];
+      return next;
+    });
+  }
+
   const cartItems = cart?.items ?? [];
   const cartIsEmpty = !loadingCart && cartItems.length === 0;
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${isReady ? "is-ready" : ""}`}>
+      <div className="ambient-lights">
+        <span />
+        <span />
+        <span />
+      </div>
       <header className="app-header">
         <div>
           <h1 className="brand">Vibe Supply</h1>
@@ -168,7 +227,15 @@ function App() {
           ) : (
             <div className="product-grid">
               {filteredProducts.map((product) => (
-                <article key={product._id} className="product-card">
+                <article
+                  key={product._id}
+                  className={`product-card ${
+                    highlightedProductId === product._id ? "is-highlighted" : ""
+                  }`}
+                  onMouseMove={(event) => handleCardMouseMove(event, product._id)}
+                  onMouseLeave={() => handleCardMouseLeave(product._id)}
+                  style={cardStyles[product._id]}
+                >
                   <div className="product-image">
                     <img src={product.image} alt={product.name} loading="lazy" />
                   </div>
